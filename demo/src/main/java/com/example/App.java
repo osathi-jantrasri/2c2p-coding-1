@@ -12,7 +12,8 @@ public class App {
     private static final List<String> TARGET_CURRENCIES = List.of("THB", "USD");
 
     public static void main(String[] args) {
-        String dataFilePath = args.length > 0 ? args[0] : "data.json";
+        //get data from root
+        String dataFilePath = "data.json";
         Path filePath = Path.of(dataFilePath);
 
         try {
@@ -23,7 +24,7 @@ public class App {
                 }
             );
 
-            System.out.println("Payment amount statistics from: " + filePath.toAbsolutePath());
+            System.out.println("Payment data from: " + filePath.toAbsolutePath());
             for (String currency : TARGET_CURRENCIES) {
                 DoubleSummaryStatistics statistics = transactions.stream()
                     .filter(transaction -> currency.equalsIgnoreCase(transaction.currency()))
