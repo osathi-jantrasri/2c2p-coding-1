@@ -7,10 +7,12 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.DoubleSummaryStatistics;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 public class App {
-    private static final List<String> TARGET_CURRENCIES = List.of("THB", "USD");
-
     public static void main(String[] args) {
         //get data from root
         String dataFilePath = "data.json";
@@ -25,25 +27,36 @@ public class App {
             );
 
             System.out.println("Payment data from: " + filePath.toAbsolutePath());
-            for (String currency : TARGET_CURRENCIES) {
-                DoubleSummaryStatistics statistics = transactions.stream()
-                    .filter(transaction -> currency.equalsIgnoreCase(transaction.currency()))
-                    .mapToDouble(Transaction::paymentAmount)
-                    .summaryStatistics();
+            Map<String, DoubleSummaryStatistics> statisticsByCurrency = transactions.stream()
+                .filter(transaction -> transaction.currency() != null)
+                .map(transaction -> new Transaction(
+                    transaction.transaction_id(),
+                    transaction.paymentAmount(),
+                    transaction.currency().trim(),
+                    transaction.created_at()
+                ))
+                .filter(transaction -> !transaction.currency().isBlank())
+                .collect(Collectors.groupingBy(
+                    transaction -> transaction.currency().toUpperCase(Locale.ROOT),
+                    TreeMap::new,
+                    Collectors.summarizingDouble(Transaction::paymentAmount)
+                ));
 
-                if (statistics.getCount() == 0) {
-                    System.out.printf("%s -> no records found%n", currency);
-                } else {
-                    System.out.printf(
-                        "%s -> min: %.2f, max: %.2f, avg: %.2f, count: %d%n",
-                        currency,
-                        statistics.getMin(),
-                        statistics.getMax(),
-                        statistics.getAverage(),
-                        statistics.getCount()
-                    );
-                }
+            if (statisticsByCurrency.isEmpty()) {
+                System.out.println("No valid currency records found");
+                return;
             }
+
+            statisticsByCurrency.forEach((currency, statistics) ->
+                System.out.printf(
+                    "%s -> min: %.2f, max: %.2f, avg: %.2f, count: %d%n",
+                    currency,
+                    statistics.getMin(),
+                    statistics.getMax(),
+                    statistics.getAverage(),
+                    statistics.getCount()
+                )
+            );
         } catch (IOException exception) {
             System.err.println("Failed to read JSON file: " + filePath.toAbsolutePath());
             System.err.println(exception.getMessage());

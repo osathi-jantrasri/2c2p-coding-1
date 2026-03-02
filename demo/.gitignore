@@ -1,0 +1,16 @@
+# Maven build output
+/target/
+
+# Maven Shade generated file
+/dependency-reduced-pom.xml
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+
+# IDE files
+.idea/
+*.iml
+.vscode/
