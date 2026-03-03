@@ -75,7 +75,7 @@ USD -> min: 1.81, max: 99.92, avg: 51.98, count: 505
 
 ### Build the Image
 ```bash
-# From project root
+cd demo
 docker build -t payment-stats:latest .
 ```
 
