@@ -25,15 +25,11 @@ This console application processes payment transaction records and provides stat
 - Uses Jackson ObjectMapper to parse JSON into Transaction objects
 - Throws `IOException` if file is missing or malformed
 
-**`Transaction.java`** - Data model (Java record)
-- Immutable record representing a single payment transaction
-- Fields: `transaction_id`, `payment_amount`, `currency`, `created_at`
-- Provides accessor method `paymentAmount()` for calculations
-
 **`ValidateData.java`** - Data validation
 - Validates all transactions before processing
 - Returns detailed error reports with transaction ID and error list
 - **Validation Rules:**
+  - `transaction_id` must not be null or blank (after trim)
   - `payment_amount` must be > 0 (rejects zero and negative amounts)
   - `currency` must not be null or blank (after trim)
   - `created_at` must not be null or blank (after trim)
@@ -44,31 +40,35 @@ This console application processes payment transaction records and provides stat
 - Calculates min, max, average, and count per currency
 - Outputs results to console in alphabetical order by currency
 
+**`Transaction.java`** - Data model (Java record)
+- Record representing a single payment transaction
+- Fields: `transaction_id`, `payment_amount`, `currency`, `created_at`
+- Provides accessor method `paymentAmount()` for calculations
+
 ## Running Locally
 
 ### Prerequisites
 - Java 21 (OpenJDK)
 - Maven 3.9.10
-- `data.json` file in the `demo/` directory
 
 ### Run Tests
 ```bash
 cd demo
 mvn test
 ```
-Executes 27 unit tests covering all core functionality (4 test classes).
 
 ### Run the Application
 ```bash
 cd demo
 mvn -q exec:java
 ```
-Processes `data.json` and prints currency statistics to stdout.
+Processes `data.json` and prints currency statistics to console.
 
 **Example Output:**
 ```
-THB -> min: 50.00, max: 100.00, avg: 75.00, count: 2
-USD -> min: 10.00, max: 30.00, avg: 20.00, count: 3
+Payment data from: /2c2p-coding-1/demo/data.json
+THB -> min: 1.29, max: 100.00, avg: 48.07, count: 495
+USD -> min: 1.81, max: 99.92, avg: 51.98, count: 505
 ```
 
 ## Docker
@@ -76,40 +76,12 @@ USD -> min: 10.00, max: 30.00, avg: 20.00, count: 3
 ### Build the Image
 ```bash
 # From project root
-docker build -t payment-stats:latest demo/
+docker build -t payment-stats:latest .
 ```
-Creates a lightweight multi-stage Docker image (~200MB) with Java 21 Alpine JRE.
 
 ### Run the Container
 ```bash
 docker run --rm payment-stats:latest
-```
-Executes the application inside the container and prints results.
-
-**Mount Local Data:**
-```bash
-docker run --rm -v $(pwd)/demo/data.json:/app/data.json payment-stats:latest
-```
-Takes `data.json` from the host filesystem instead of the image.
-
-## Sample Data Format
-
-`data.json` should contain an array of transaction objects:
-```json
-[
-  {
-    "transaction_id": "TXN001",
-    "payment_amount": 10.50,
-    "currency": "USD",
-    "created_at": "1704067200"
-  },
-  {
-    "transaction_id": "TXN002",
-    "payment_amount": 100.00,
-    "currency": "THB",
-    "created_at": "1704153600000"
-  }
-]
 ```
 
 ## Error Handling
@@ -121,18 +93,43 @@ If validation errors occur, the application will:
 
 Example error output:
 ```
-[ERROR] Validation failed for transaction TXN003:
-  - payment_amount must be greater than 0
-  - currency cannot be blank
-
-[ERROR] Validation failed for transaction TXN005:
-  - created_at is not a valid epoch timestamp
+Invalid transaction <missing-transaction-id> -> transaction_id must not be null or blank
+Validation failed. Statistics were not calculated.
 ```
 
-## Build Output
+```
+Invalid transaction 0f15ed5c-2237-46f8-ab32-2181a7814846 -> payment_amount must be greater than 0 Validation failed. 
+Statistics were not calculated.
+```
 
-- **JAR File:** `target/demo.jar` (fat JAR with all dependencies included)
-- **Test Reports:** `target/surefire-reports/` (detailed test execution reports)
+```
+Invalid transaction 068d1761-f317-4d7b-b494-bab0d7a8523a -> currency must not be null or blank Validation failed. 
+Statistics were not calculated.
+```
+
+```
+Invalid transaction 624b6d3c-0713-4f8b-914c-b175306ec75a -> created_at must be a valid epoch timestamp (10-digit seconds or 13-digit milliseconds) Validation failed. Statistics were not calculated.
+```
+
+## Data Format
+
+`data.json` should contain an array of transaction objects:
+```json
+[
+  {
+    "transaction_id":"403f3bed-2d3f-43e3-97a4-b4eb5487ba62",
+    "payment_amount":84.4,
+    "currency":"USD",
+    "created_at":"1763927285000"
+  },
+  {
+    "transaction_id":"c6f8f398-000c-4688-998a-b5c7eeb01582",
+    "payment_amount":58.26,
+    "currency":"THB",
+    "created_at":"1763685352000"
+  }
+]
+```
 
 ## Development Notes
 

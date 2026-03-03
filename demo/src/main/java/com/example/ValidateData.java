@@ -12,6 +12,10 @@ public class ValidateData {
         for (Transaction transaction : transactions) {
             List<String> errors = new ArrayList<>();
 
+            if (transaction.transaction_id() == null || transaction.transaction_id().isBlank()) {
+                errors.add("transaction_id must not be null or blank");
+            }
+
             if (transaction.paymentAmount() <= 0) {
                 errors.add("payment_amount must be greater than 0");
             }

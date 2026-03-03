@@ -146,7 +146,16 @@ public class ValidateDataTest {
         Transaction transaction = new Transaction(null, 50.0, "USD", "1751512490000");
         List<ValidateData.ValidationError> errors = validateData.validate(List.of(transaction));
 
-        // Null transaction_id is allowed
-        assertTrue(errors.isEmpty());
+        assertFalse(errors.isEmpty());
+        assertTrue(errors.get(0).errors().toString().contains("transaction_id must not be null or blank"));
+    }
+
+    @Test
+    public void testValidateBlankTransactionId() {
+        Transaction transaction = new Transaction("  ", 50.0, "USD", "1751512490000");
+        List<ValidateData.ValidationError> errors = validateData.validate(List.of(transaction));
+
+        assertFalse(errors.isEmpty());
+        assertTrue(errors.get(0).errors().toString().contains("transaction_id must not be null or blank"));
     }
 }
